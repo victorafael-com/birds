@@ -14,8 +14,7 @@ public class BirdAgentConfig : MonoBehaviour {
     public float maxVelocity;
 
     [Header("Search")]
-    public float searchIntervalMin;
-    public float searchIntervalMax;
+    public float searchInterval;
     [Space]
     public float cohesionSearchRadius = 15;
     public float separationSearchRadius = 4;

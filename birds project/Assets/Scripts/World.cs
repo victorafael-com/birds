@@ -22,12 +22,28 @@ public class World : MonoBehaviour {
     public float boundariesRadius = 300;
     public GameObject bloodPrefab;
 
+	public float distanceTableUpdateInterval = 0.4f;
+	private float distanceTableMarker = 0;
+	private Dictionary<int, float> distanceTable;
+
 	// Use this for initialization
 	void Awake () {
         instance = this;
 	}
+
 	void Start() {
+		distanceTable = new Dictionary<int, float> ();
         birds = new Dictionary<BirdType, List<BirdAgent>>();
+//
+//		WorldSpawnDetail w = new WorldSpawnDetail () {
+//			ammount = 55,
+//			cfg = spawns [0].cfg,
+//			flockId = 1,
+//			position = Vector3.up * 40,
+//			radius = 1
+//		};
+//		boundariesRadius = 15;
+//		SpawnBirds (w);
         foreach(var wsd in spawns) { 
             SpawnBirds(wsd);
         }
@@ -36,11 +52,11 @@ public class World : MonoBehaviour {
             b.SetWatchedBirds(birds[BirdType.predator]);
         }
     }
-	// Update is called once per frame
-	void Update () {
-	
+	void Update(){
+		distanceTableMarker += Time.deltaTime;
+		if(distanceTableMarker > distanceTableUpdateInterval)
+			distanceTable.Clear ();
 	}
-
     public void SpawnBirds(WorldSpawnDetail spawnDetail) {
         if (!birds.ContainsKey(spawnDetail.cfg.type)) {
             birds.Add(spawnDetail.cfg.type, new List<BirdAgent>());
@@ -58,6 +74,22 @@ public class World : MonoBehaviour {
         }
     }
 
+	public float BirdDistance(BirdAgent a, BirdAgent b){
+		int key;
+		if (a.Id < b.Id) {
+			key = a.Id * 10000 + b.Id;
+		} else {
+			key = b.Id * 10000 + a.Id;
+		}
+		if(distanceTable.ContainsKey(key)){
+			return (float)distanceTable [key];
+		}else{
+			float dist = Vector3.Distance (a.position, b.position);
+			distanceTable.Add (key, dist);
+			return dist;
+		}
+	}
+
     void OnDrawGizmos() {
         Gizmos.color = Color.red;
 
@@ -69,16 +101,31 @@ public class World : MonoBehaviour {
         }
     }
     public List<BirdAgent> GetNeighbours(BirdAgent agent, float radius) {
-        return birds[agent.config.type].Where(b => b != agent && Vector3.Distance(agent.transform.position, b.transform.position) <= radius && b.flockID == agent.flockID).ToList();
+		var ret = new List<BirdAgent> ();
+		var list = birds [agent.config.type].ToArray();
+		int index = System.Array.IndexOf (list, agent);
+		for (var i = 0; i < list.Length; i++) {
+			if (i == index)
+				continue;
+			if (BirdDistance (agent, list [i]) <= radius && agent.flockID == list [i].flockID)
+				ret.Add (list [i]);
+		}
+		return ret;
+        //return birds[agent.config.type].Where(b => b != agent && Vector3.Distance(agent.transform.position, b.transform.position) <= radius && b.flockID == agent.flockID).ToList();
     }
+	public List<BirdAgent> GetNeighbours(BirdAgent agent, List<BirdAgent> searchList, float radius){
+		var ret = new List<BirdAgent> ();
+		for (var i = 0; i < searchList.Count; i++) {
+			if (BirdDistance (agent, searchList [i]) <= radius && agent.flockID == searchList [i].flockID)
+				ret.Add (searchList [i]);
+		}
+		return ret;
+	}
     public void KillBird(BirdAgent b, bool destroyBody) {
         b.alive = false;
         birds[b.config.type].Remove(b);
         if (destroyBody) {
-            foreach(Transform t in b.transform) { 
-                t.gameObject.SetActive(false);
-            }
-
+			b.DestroyBody ();
             Destroy(Instantiate(bloodPrefab, b.transform.position, Quaternion.identity), 10);
         }
         Destroy(b.gameObject, 4);
@@ -89,35 +136,4 @@ public class World : MonoBehaviour {
         }
         Debug.Log(debug);
     }
-
-    //Texture2D whiteDot;
-    //void OnGUI() {
-    //    if(whiteDot == null) {
-    //        whiteDot = new Texture2D(1, 1);
-    //        whiteDot.SetPixel(0, 0, Color.white);
-    //        whiteDot.Apply();
-    //    }
-    //    GUI.color = Color.black;
-    //    Rect cr = new Rect(Camera.main.transform.position.x-3, Camera.main.transform.position.z-3, 6, 6);
-    //    GUI.DrawTexture(cr, whiteDot);
-    //    GUI.color = Color.white;
-    //    cr.x += 1;
-    //    cr.y += 1;
-    //    cr.width -= 2;
-    //    cr.height -= 2;
-    //    GUI.DrawTexture(cr, whiteDot);
-    //    //GUI.DrawTexture()
-    //    foreach(var kvp in birds) { 
-    //        foreach(var b in kvp.Value) {
-    //            Rect r = new Rect(
-    //                b.transform.position.x-1,
-    //                b.transform.position.z-1,
-    //                2, 2);
-    //            r.x += Screen.width * 0.5f;
-    //            r.y += Screen.height * 0.5f;
-    //            GUI.color = Color.Lerp(Color.green, Color.red, Mathf.InverseLerp(0, 80, b.transform.position.y));
-    //            GUI.DrawTexture(r, whiteDot);
-    //        }
-    //    }
-    //}
 }

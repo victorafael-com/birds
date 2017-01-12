@@ -22,22 +22,26 @@ public class BirdFollowCamera : MonoBehaviour {
 	// Update is called once per frame
 	void LateUpdate () {
         
-        if (Input.GetMouseButtonUp(1)) {
-            target = World.instance.birds[searchType].GetRandom().transform;
-        }
-        if (target != null) {
-            transform.position = Vector3.MoveTowards(transform.position, target.transform.position, moveSpeed * Time.deltaTime * (Input.GetMouseButton(0) ? 5 : 1));
-        }
-        if (!Input.GetMouseButton(0) || target == null) {
-            transform.Rotate(Input.GetAxis("Mouse Y"), Input.GetAxis("Mouse X"), 0);
-        } else {
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, target.rotation, 45 * Time.deltaTime);
-        }
+//        if (Input.GetMouseButtonUp(1)) {
+//            target = World.instance.birds[searchType].GetRandom().transform;
+//        }
 
-        if (Input.GetMouseButton(2)) {
-            cam.transform.localPosition = Vector3.MoveTowards(cam.transform.localPosition, zoomPos, 5 * Time.deltaTime);
-        } else {
-            cam.transform.localPosition = Vector3.MoveTowards(cam.transform.localPosition, originalPos, 5 * Time.deltaTime);
-        }
+		if (target != null) {
+			transform.position = Vector3.MoveTowards (transform.position, target.transform.position, moveSpeed * Time.deltaTime * (Input.GetMouseButton (0) ? 5 : 1));
+			transform.rotation = Quaternion.RotateTowards (transform.rotation, target.rotation, 45 * Time.deltaTime);
+		} else {
+			target = World.instance.birds[searchType].GetRandom().transform;
+			transform.position = target.transform.position;
+		}
+//        if (!Input.GetMouseButton(0) || target == null) {
+//            transform.Rotate(Input.GetAxis("Mouse Y"), Input.GetAxis("Mouse X"), 0);
+//        } else {
+//        }
+
+//        if (Input.GetMouseButton(2)) {
+//            cam.transform.localPosition = Vector3.MoveTowards(cam.transform.localPosition, zoomPos, 5 * Time.deltaTime);
+//        } else {
+//            cam.transform.localPosition = Vector3.MoveTowards(cam.transform.localPosition, originalPos, 5 * Time.deltaTime);
+//        }
 	}
 }

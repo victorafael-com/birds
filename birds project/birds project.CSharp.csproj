@@ -67,6 +67,7 @@
     <Compile Include="Assets\Scripts\BirdAgentConfig.cs" />
     <Compile Include="Assets\Scripts\BirdFollowCamera.cs" />
     <Compile Include="Assets\Scripts\BirdType.cs" />
+    <Compile Include="Assets\Scripts\BirdWatchCamera.cs" />
     <Compile Include="Assets\Scripts\PredatoryBehaviour.cs" />
     <Compile Include="Assets\Scripts\VRExtensionMethods.cs" />
     <Compile Include="Assets\Scripts\World.cs" />
