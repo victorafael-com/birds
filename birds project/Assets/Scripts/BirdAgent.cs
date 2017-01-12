@@ -4,10 +4,11 @@ using System.Collections.Generic;
 
 public class BirdAgent : MonoBehaviour
 {
+	private static int CurrentBirdID = 0;
+
 	private const int SEPARATION_SKIPS = 8;
 	private const int COHESION_SKIPS = 4;
 	private const int ALIGNMENT_SKIPS = 4;
-	private static int CurrentBirdID = 0;
 	Vector3 acceleration;
 	Vector3 velocity;
 
@@ -53,7 +54,7 @@ public class BirdAgent : MonoBehaviour
 	// Use this for initialization
 	IEnumerator Start ()
 	{
-		velocityVariation = Random.Range (0.95f, 1.05f);
+		velocityVariation = Random.Range (0.8f, 1.2f);
 		animator = GetComponentInChildren<Animator> ();
 		cohesionSkipCount = Random.Range (0, COHESION_SKIPS) + COHESION_SKIPS; //Force update on first frame
 		separationSkipCount = Random.Range (0, SEPARATION_SKIPS) + SEPARATION_SKIPS; //Force update on first frame
@@ -74,24 +75,27 @@ public class BirdAgent : MonoBehaviour
 		velocity = velocity.normalized * config.maxVelocity;
 
 		position = transform.position;
+
+
+		cohesionNeighbours = 	new List<BirdAgent> ();
+		separationNeighbours = 	new List<BirdAgent>();
+		alignmentNeighbours =  	new List<BirdAgent>();
+
 		if (config.searchInterval > 0) {
 			float nextCycle = Random.Range (config.searchInterval, config.searchInterval * 2);
 			do {
-				cohesionNeighbours = World.instance.GetNeighbours (this, config.cohesionSearchRadius);
-				if (config.separationSearchRadius > config.alignmentSearchRadius) {
-					separationNeighbours = World.instance.GetNeighbours (this, cohesionNeighbours, config.separationSearchRadius);//Reduce search scope to boost performance
-					alignmentNeighbours = World.instance.GetNeighbours (this, separationNeighbours, config.alignmentSearchRadius);//Reduce search scope to boost performance
-				} else {
-					alignmentNeighbours = World.instance.GetNeighbours (this, cohesionNeighbours, config.alignmentSearchRadius);//Reduce search scope to boost performance
-					separationNeighbours = World.instance.GetNeighbours (this, alignmentNeighbours, config.separationSearchRadius);//Reduce search scope to boost performance
-				}
+//				cohesionNeighbours = World.instance.GetNeighbours (this, config.cohesionSearchRadius);
+//				if (config.separationSearchRadius > config.alignmentSearchRadius) {
+//					separationNeighbours = World.instance.GetNeighbours (this, cohesionNeighbours, config.separationSearchRadius);//Reduce search scope to boost performance
+//					alignmentNeighbours = World.instance.GetNeighbours (this, separationNeighbours, config.alignmentSearchRadius);//Reduce search scope to boost performance
+//				} else {
+//					alignmentNeighbours = World.instance.GetNeighbours (this, cohesionNeighbours, config.alignmentSearchRadius);//Reduce search scope to boost performance
+//					separationNeighbours = World.instance.GetNeighbours (this, alignmentNeighbours, config.separationSearchRadius);//Reduce search scope to boost performance
+//				}
+				World.instance.GetAllNeighbours(this, config, ref cohesionNeighbours, ref alignmentNeighbours, ref separationNeighbours);
 				yield return new WaitForSeconds (nextCycle);
 				nextCycle = config.searchInterval;
 			} while (true);
-		} else {
-			cohesionNeighbours = new List<BirdAgent> ();
-			separationNeighbours = new List<BirdAgent> ();
-			alignmentNeighbours = new List<BirdAgent> ();
 		}
 	}
 

@@ -22,17 +22,12 @@ public class World : MonoBehaviour {
     public float boundariesRadius = 300;
     public GameObject bloodPrefab;
 
-	public float distanceTableUpdateInterval = 0.4f;
-	private float distanceTableMarker = 0;
-	private Dictionary<int, float> distanceTable;
-
 	// Use this for initialization
 	void Awake () {
         instance = this;
 	}
 
 	void Start() {
-		distanceTable = new Dictionary<int, float> ();
         birds = new Dictionary<BirdType, List<BirdAgent>>();
 //
 //		WorldSpawnDetail w = new WorldSpawnDetail () {
@@ -52,11 +47,6 @@ public class World : MonoBehaviour {
             b.SetWatchedBirds(birds[BirdType.predator]);
         }
     }
-	void Update(){
-		distanceTableMarker += Time.deltaTime;
-		if(distanceTableMarker > distanceTableUpdateInterval)
-			distanceTable.Clear ();
-	}
     public void SpawnBirds(WorldSpawnDetail spawnDetail) {
         if (!birds.ContainsKey(spawnDetail.cfg.type)) {
             birds.Add(spawnDetail.cfg.type, new List<BirdAgent>());
@@ -75,19 +65,7 @@ public class World : MonoBehaviour {
     }
 
 	public float BirdDistance(BirdAgent a, BirdAgent b){
-		int key;
-		if (a.Id < b.Id) {
-			key = a.Id * 10000 + b.Id;
-		} else {
-			key = b.Id * 10000 + a.Id;
-		}
-		if(distanceTable.ContainsKey(key)){
-			return (float)distanceTable [key];
-		}else{
-			float dist = Vector3.Distance (a.position, b.position);
-			distanceTable.Add (key, dist);
-			return dist;
-		}
+		return Vector3.Distance (a.position, b.position);
 	}
 
     void OnDrawGizmos() {
@@ -100,22 +78,78 @@ public class World : MonoBehaviour {
             Gizmos.DrawWireSphere(s.position, s.radius);
         }
     }
-    public List<BirdAgent> GetNeighbours(BirdAgent agent, float radius) {
-		var ret = new List<BirdAgent> ();
-		var list = birds [agent.config.type].ToArray();
-		int index = System.Array.IndexOf (list, agent);
-		for (var i = 0; i < list.Length; i++) {
-			if (i == index)
+
+	public void GetAllNeighbours(BirdAgent agent, BirdAgentConfig config, ref List<BirdAgent> cohesion, ref List<BirdAgent> alignment, ref List<BirdAgent> separation){
+		cohesion.Clear();
+		alignment.Clear();
+		separation.Clear();
+
+		var list = birds [agent.config.type];
+		int length = list.Count;
+		BirdAgent b;
+		float dist;
+		for (var i = 0; i < length; i++) {
+			b = list [i];
+			if (agent.Id == b.Id || agent.flockID != b.flockID)
 				continue;
-			if (BirdDistance (agent, list [i]) <= radius && agent.flockID == list [i].flockID)
-				ret.Add (list [i]);
+			dist = BirdDistance (agent, b);
+
+			if (dist < config.cohesionSearchRadius) {
+				cohesion.Add (b);
+				if (dist < config.alignmentSearchRadius) {
+					alignment.Add (b);
+				}
+				if (dist < config.separationSearchRadius) {
+					separation.Add (b);
+				}
+			}
 		}
+		//		int index = System.Array.IndexOf (list, agent);
+		//		int length = list.Length;
+		//		for (var i = 0; i < length; i++) {
+		//			if (i == index)
+		//				continue;
+		//			if (BirdDistance (agent, list [i]) <= radius && agent.flockID == list [i].flockID)
+		//				ret.Add (list [i]);
+		//		}
+	}
+
+	public List<BirdAgent> GetNeighbours(BirdAgent agent, float radius) {
+//		var ret = new List<BirdAgent> ();
+//		var list = birds [agent.config.type].ToArray();
+//		int index = System.Array.IndexOf (list, agent);
+//		int length = list.Length;
+//		for (var i = 0; i < length; i++) {
+//			if (i == index)
+//				continue;
+//			if (BirdDistance (agent, list [i]) <= radius && agent.flockID == list [i].flockID)
+//				ret.Add (list [i]);
+//		}
+//		return ret;
+
+		return birds[agent.config.type].Where(b => b.Id != agent.Id && BirdDistance(agent, b) <= radius && b.flockID == agent.flockID).ToList();
+	}
+	public List<BirdAgent> GetNeighbours(BirdAgent agent, IEnumerable<BirdAgent> searchList, float radius){
+		var ret = new List<BirdAgent> ();
+//		int length = searchList.Count;
+
+		using (var iterator = searchList.GetEnumerator ()) {
+			var bird = iterator.Current;
+			if (BirdDistance (agent, bird) <= radius && agent.flockID == bird.flockID) {
+				ret.Add (bird);
+			}
+		}
+
+//		for (var i = 0; i < length; i++) {
+//			if (BirdDistance (agent, searchList [i]) <= radius && agent.flockID == searchList [i].flockID)
+//				ret.Add (searchList [i]);
+//		}
 		return ret;
-        //return birds[agent.config.type].Where(b => b != agent && Vector3.Distance(agent.transform.position, b.transform.position) <= radius && b.flockID == agent.flockID).ToList();
-    }
+	}
 	public List<BirdAgent> GetNeighbours(BirdAgent agent, List<BirdAgent> searchList, float radius){
 		var ret = new List<BirdAgent> ();
-		for (var i = 0; i < searchList.Count; i++) {
+		int length = searchList.Count;
+		for (var i = 0; i < length; i++) {
 			if (BirdDistance (agent, searchList [i]) <= radius && agent.flockID == searchList [i].flockID)
 				ret.Add (searchList [i]);
 		}
