@@ -72,6 +72,10 @@ public class LowPolyTerrainEditor : Editor {
 		if (GUILayout.Button ("Generate")) {
 			GenerateTerrain (lowPolyTerrain);
 		}
+
+		if (GUI.changed) {
+			EditorUtility.SetDirty (lowPolyTerrain);
+		}
 	}
 
 	void GenerateTerrain(LowPolyTerrain lowPolyTerrain){
@@ -99,50 +103,25 @@ public class LowPolyTerrainEditor : Editor {
 				Mathf.Lerp(lowPolyTerrain.minHeight, lowPolyTerrain.maxHeight, pixels[i].r),
 				initialOffset.y + z * lowPolyTerrain.unitsPerPixel);
 		}
-
-		int currentVertice = 0;
 		for (int x = 0; x < width - 1; x++) {
 			for (int y = 0; y < height - 1; y++) {
-				int current = GetVerticeIndex (x, y, width);
-				int right = GetVerticeIndex (x + 1, y, width);
-				int bottom = GetVerticeIndex (x, y + 1, width);
-				int diagonal = GetVerticeIndex (x + 1, y + 1, width);
+				
+				Vector3 current = referenceVertices [GetVerticeIndex (x, y, width)];
+				Vector3 right = referenceVertices [GetVerticeIndex (x + 1, y, width)];
+				Vector3 bottom = referenceVertices [GetVerticeIndex (x, y+1, width)];
+				Vector3 diagonal = referenceVertices [GetVerticeIndex (x + 1, y+1, width)];
+				Vector3 middle = (current + right + bottom + diagonal) / 4;
+				//middle.y = Mathf.Min (current.y, right.y, bottom.y, diagonal.y);
 
-				Vector2 quadUV = GetColorUV (lowPolyTerrain, referenceVertices [current], referenceVertices [right], referenceVertices [bottom], referenceVertices [diagonal]);
-
-				//Populates the real vertices list with the pre calculated vertices
-				realVertices.Add (referenceVertices [current]); 
-				realVertices.Add (referenceVertices [right]);
-				realVertices.Add (referenceVertices [bottom]);
-				realVertices.Add (referenceVertices [diagonal]);
-
-				//Set uv for the 4 new vertices
-				uvs.Add (quadUV);
-				uvs.Add (quadUV);
-				uvs.Add (quadUV);
-				uvs.Add (quadUV);
-
-				//Replaces the original ids with the new vertices ids
-				current = currentVertice++; 
-				right = currentVertice++;
-				bottom = currentVertice++;
-				diagonal = currentVertice++;
-
-				triangles.Add (current);
-				triangles.Add (bottom);
-				triangles.Add (right);
-				triangles.Add (right);
-				triangles.Add (bottom);
-				triangles.Add (diagonal);
+				CreateTriangle (lowPolyTerrain, current, middle, right, realVertices, uvs, triangles);
+				CreateTriangle (lowPolyTerrain, right, middle, diagonal, realVertices, uvs, triangles);
+				CreateTriangle (lowPolyTerrain, middle, bottom, diagonal, realVertices, uvs, triangles);
+				CreateTriangle (lowPolyTerrain, middle, current, bottom, realVertices, uvs, triangles);
 			}
 		}
 
 		MeshFilter filter = lowPolyTerrain.GetComponent<MeshFilter> ();
-		if (lowPolyTerrain.GetComponent<MeshCollider> () != null) {
-			var collider = lowPolyTerrain.GetComponent<MeshCollider> ();
-			DestroyImmediate (collider);
-			lowPolyTerrain.gameObject.AddComponent<MeshCollider> ();
-		}
+
 
 		Mesh mesh = new Mesh ();
 		mesh.SetVertices(realVertices);
@@ -151,6 +130,10 @@ public class LowPolyTerrainEditor : Editor {
 		mesh.RecalculateNormals ();
 
 		filter.sharedMesh = mesh;
+		if (lowPolyTerrain.GetComponent<MeshCollider> () != null) {
+			var collider = lowPolyTerrain.GetComponent<MeshCollider> ();
+			collider.sharedMesh = mesh;
+		}
 
 		//Create Texture
 		Texture2D t = new Texture2D(ColorMaterialWidth, ColorMaterialWidth);
@@ -162,6 +145,24 @@ public class LowPolyTerrainEditor : Editor {
 		t.Apply ();
 
 		lowPolyTerrain.GetComponent<MeshRenderer> ().sharedMaterial.mainTexture = t;
+	}
+
+	void CreateTriangle(LowPolyTerrain terrain, Vector3 a, Vector3 b, Vector3 c, List<Vector3> vertices, List<Vector2> uvs, List<int> triangles){
+		Vector2 uv = GetColorUV (terrain, a, b, c);
+
+		int startVertice = vertices.Count;
+
+		vertices.Add (a);
+		vertices.Add (b);
+		vertices.Add (c);
+
+		uvs.Add (uv);
+		uvs.Add (uv);
+		uvs.Add (uv);
+
+		triangles.Add (startVertice);
+		triangles.Add (startVertice+1);
+		triangles.Add (startVertice+2);
 	}
 
 	int GetVerticeIndex(int x, int y, int width){
