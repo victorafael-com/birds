@@ -5,6 +5,9 @@ using UnityEditor;
 
 [CustomEditor(typeof(LowPolyTerrain))]
 public class LowPolyTerrainEditor : Editor {
+
+	private const int ColorMaterialWidth = 4;
+
 	public override void OnInspectorGUI ()
 	{
 		var lowPolyTerrain = target as LowPolyTerrain;
@@ -54,7 +57,7 @@ public class LowPolyTerrainEditor : Editor {
 			}
 			GUILayout.EndHorizontal ();
 		}
-		GUI.enabled = true;
+		GUI.enabled = lowPolyTerrain.colors.Count < (ColorMaterialWidth * ColorMaterialWidth);
 		EditorGUILayout.BeginHorizontal ();
 		if (GUILayout.Button ("add color")) {
 			lowPolyTerrain.colors.Add (lowPolyTerrain.colors [lowPolyTerrain.colors.Count - 1]);
@@ -62,7 +65,7 @@ public class LowPolyTerrainEditor : Editor {
 		}
 		GUILayout.FlexibleSpace ();
 		EditorGUILayout.EndHorizontal ();
-
+		GUI.enabled = true;
 		EditorGUILayout.Space ();
 
 		GUI.enabled = lowPolyTerrain.referenceTexture != null;
@@ -83,6 +86,7 @@ public class LowPolyTerrainEditor : Editor {
 		Vector3[] referenceVertices = new Vector3[pixels.Length];
 
 		List<Vector3> realVertices = new List<Vector3> ();
+		List<Vector2> uvs = new List<Vector2> ();
 		List<int> triangles = new List<int> ();
 
 		//Setups all reference vertices on its places
@@ -104,11 +108,19 @@ public class LowPolyTerrainEditor : Editor {
 				int bottom = GetVerticeIndex (x, y + 1, width);
 				int diagonal = GetVerticeIndex (x + 1, y + 1, width);
 
+				Vector2 quadUV = GetColorUV (lowPolyTerrain, referenceVertices [current], referenceVertices [right], referenceVertices [bottom], referenceVertices [diagonal]);
+
 				//Populates the real vertices list with the pre calculated vertices
 				realVertices.Add (referenceVertices [current]); 
 				realVertices.Add (referenceVertices [right]);
 				realVertices.Add (referenceVertices [bottom]);
 				realVertices.Add (referenceVertices [diagonal]);
+
+				//Set uv for the 4 new vertices
+				uvs.Add (quadUV);
+				uvs.Add (quadUV);
+				uvs.Add (quadUV);
+				uvs.Add (quadUV);
 
 				//Replaces the original ids with the new vertices ids
 				current = currentVertice++; 
@@ -135,12 +147,51 @@ public class LowPolyTerrainEditor : Editor {
 		Mesh mesh = new Mesh ();
 		mesh.SetVertices(realVertices);
 		mesh.SetTriangles(triangles,0);
+		mesh.SetUVs (0, uvs);
 		mesh.RecalculateNormals ();
 
 		filter.sharedMesh = mesh;
+
+		//Create Texture
+		Texture2D t = new Texture2D(ColorMaterialWidth, ColorMaterialWidth);
+		Color[] renderPixels = new Color[ColorMaterialWidth * ColorMaterialWidth];
+		for (int i = 0; i < lowPolyTerrain.colors.Count; i++) {
+			renderPixels [i] = lowPolyTerrain.colors [i];
+		}
+		t.SetPixels (renderPixels);
+		t.Apply ();
+
+		lowPolyTerrain.GetComponent<MeshRenderer> ().sharedMaterial.mainTexture = t;
 	}
 
 	int GetVerticeIndex(int x, int y, int width){
 		return y * width + x;
+	}
+
+	Vector2 GetColorUV(LowPolyTerrain terrain, params Vector3[] vertices){
+		int id = GetColorId (terrain, vertices);
+		int x = id % ColorMaterialWidth;
+		int y = id / ColorMaterialWidth;
+
+		float unitSize = 1 / (float)ColorMaterialWidth;
+
+		Vector2 result = new Vector2 (x * unitSize + unitSize * 0.5f, y * unitSize + unitSize * 0.5f);
+		return result;
+	}
+
+	int GetColorId(LowPolyTerrain terrain, params Vector3[] vertices){
+		float y = 0;
+
+		for (var i = 0; i < vertices.Length; i++)
+			y += vertices [i].y;
+
+		y /= vertices.Length;
+		float heightLerp = Mathf.InverseLerp (terrain.minHeight, terrain.maxHeight, y);
+		for (int i = 0; i < terrain.heightLimit.Count; i++) {
+			if (heightLerp <= terrain.heightLimit [i]) {
+				return i;
+			}
+		}
+		return terrain.heightLimit.Count - 1;
 	}
 }
