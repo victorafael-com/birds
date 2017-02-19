@@ -5,21 +5,12 @@ using UnityEditor;
 
 [CustomEditor(typeof(LowPolyTerrain))]
 public class LowPolyTerrainEditor : Editor {
-//	[MenuItem("Low Poly Terrain/Create...")]
-//	public static void OpenWindow(){
-//		LowPolyTerrainWindow window = new LowPolyTerrainWindow ();
-//		window.Show ();
-//		window.titleContent = new GUIContent( "Low Poly Terrain Creator" );
-//	}
-
-	private float unitsPerPixel = 1;
-
 	public override void OnInspectorGUI ()
 	{
 		var lowPolyTerrain = target as LowPolyTerrain;
 
 		lowPolyTerrain.unitsPerPixel = EditorGUILayout.FloatField ("Pixel size in units", lowPolyTerrain.unitsPerPixel);
-		lowPolyTerrain.referenceTexture = EditorGUILayout.ObjectField ("Terrain R/W Texture", lowPolyTerrain.referenceTexture, typeof(Texture2D)) as Texture2D;
+		lowPolyTerrain.referenceTexture = EditorGUILayout.ObjectField ("Terrain R/W Texture", lowPolyTerrain.referenceTexture, typeof(Texture2D),false) as Texture2D;
 
 		if(lowPolyTerrain.referenceTexture != null){
 			TextureImporter importer = AssetImporter.GetAtPath (AssetDatabase.GetAssetPath (lowPolyTerrain.referenceTexture)) as TextureImporter;
@@ -35,6 +26,45 @@ public class LowPolyTerrainEditor : Editor {
 
 		EditorGUILayout.Space ();
 
+		if (lowPolyTerrain.colors == null || lowPolyTerrain.colors.Count == 0) {
+			lowPolyTerrain.colors = new List<Color> ();
+			lowPolyTerrain.heightLimit = new List<float> ();
+			lowPolyTerrain.colors.Add (Color.white);
+			lowPolyTerrain.heightLimit.Add (1);
+		}
+
+		EditorGUILayout.LabelField ("Color ranges");
+		float lastMax = 0;
+		for (int i = 0; i < lowPolyTerrain.colors.Count; i++) {
+			GUI.enabled = true;
+			GUILayout.BeginHorizontal ();
+			lowPolyTerrain.colors [i] = EditorGUILayout.ColorField (lowPolyTerrain.colors [i]);
+			GUI.enabled = i < lowPolyTerrain.colors.Count - 1;
+
+			lowPolyTerrain.heightLimit [i] = EditorGUILayout.Slider (lowPolyTerrain.heightLimit [i], 0, 1);
+			if (lowPolyTerrain.heightLimit [i] < lastMax) {
+				lowPolyTerrain.heightLimit [i] = lastMax;
+			}
+			lastMax = lowPolyTerrain.heightLimit [i];
+			if (GUILayout.Button ("x")) {
+				lowPolyTerrain.colors.RemoveAt (i);
+				lowPolyTerrain.heightLimit.RemoveAt (i);
+				GUILayout.EndHorizontal ();
+				break;
+			}
+			GUILayout.EndHorizontal ();
+		}
+		GUI.enabled = true;
+		EditorGUILayout.BeginHorizontal ();
+		if (GUILayout.Button ("add color")) {
+			lowPolyTerrain.colors.Add (lowPolyTerrain.colors [lowPolyTerrain.colors.Count - 1]);
+			lowPolyTerrain.heightLimit.Add (1);
+		}
+		GUILayout.FlexibleSpace ();
+		EditorGUILayout.EndHorizontal ();
+
+		EditorGUILayout.Space ();
+
 		GUI.enabled = lowPolyTerrain.referenceTexture != null;
 		if (GUILayout.Button ("Generate")) {
 			GenerateTerrain (lowPolyTerrain);
@@ -47,7 +77,7 @@ public class LowPolyTerrainEditor : Editor {
 		int height = lowPolyTerrain.referenceTexture.height;
 
 
-		Vector2 initialOffset = -new Vector2 (width * unitsPerPixel, height * unitsPerPixel) / 2;
+		Vector2 initialOffset = -new Vector2 (width * lowPolyTerrain.unitsPerPixel, height * lowPolyTerrain.unitsPerPixel) / 2;
 
 		Color[] pixels = lowPolyTerrain.referenceTexture.GetPixels ();
 		Vector3[] referenceVertices = new Vector3[pixels.Length];
@@ -61,9 +91,9 @@ public class LowPolyTerrainEditor : Editor {
 			int z = i / width;
 
 			referenceVertices [i] = new Vector3 (
-				initialOffset.x + x * unitsPerPixel,
+				initialOffset.x + x * lowPolyTerrain.unitsPerPixel,
 				Mathf.Lerp(lowPolyTerrain.minHeight, lowPolyTerrain.maxHeight, pixels[i].r),
-				initialOffset.y + z * unitsPerPixel);
+				initialOffset.y + z * lowPolyTerrain.unitsPerPixel);
 		}
 
 		int currentVertice = 0;
@@ -92,25 +122,14 @@ public class LowPolyTerrainEditor : Editor {
 				triangles.Add (right);
 				triangles.Add (bottom);
 				triangles.Add (diagonal);
-
-/*				triangles [currentPos++] = current;
-				triangles [currentPos++] = bottom;
-				triangles [currentPos++] = right;
-				triangles [currentPos++] = right;
-				triangles [currentPos++] = bottom;
-				triangles [currentPos++] = diagonal;*/
 			}
 		}
 
-		GameObject generated;
-		MeshFilter filter;
-		if (Selection.activeGameObject != null) {
-			generated = Selection.activeGameObject;
-			filter = generated.GetComponent<MeshFilter> ();
-		} else {
-			generated = new GameObject ("Generated Terrain");
-			filter = generated.AddComponent<MeshFilter> ();
-			generated.AddComponent<MeshRenderer> ();
+		MeshFilter filter = lowPolyTerrain.GetComponent<MeshFilter> ();
+		if (lowPolyTerrain.GetComponent<MeshCollider> () != null) {
+			var collider = lowPolyTerrain.GetComponent<MeshCollider> ();
+			DestroyImmediate (collider);
+			lowPolyTerrain.gameObject.AddComponent<MeshCollider> ();
 		}
 
 		Mesh mesh = new Mesh ();
@@ -123,15 +142,5 @@ public class LowPolyTerrainEditor : Editor {
 
 	int GetVerticeIndex(int x, int y, int width){
 		return y * width + x;
-	}
-
-	// Use this for initialization
-	void Start () {
-		
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		
 	}
 }
