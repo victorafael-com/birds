@@ -40,6 +40,86 @@ public class LowPolyTerrainWindow : EditorWindow {
 	}
 
 	void GenerateTerrain(){
+
+		int width = referenceTexture.width;
+		int height = referenceTexture.height;
+
+
+		Vector2 initialOffset = -new Vector2 (width * unitsPerPixel, height * unitsPerPixel) / 2;
+
+		Color[] pixels = referenceTexture.GetPixels ();
+		Vector3[] referenceVertices = new Vector3[pixels.Length];
+
+		List<Vector3> realVertices = new List<Vector3> ();
+		List<int> triangles = new List<int> ();
+
+		//Setups all reference vertices on its places
+		for (int i = 0; i < pixels.Length; i++) {
+			int x = i % width;
+			int z = i / width;
+
+			referenceVertices [i] = new Vector3 (
+				initialOffset.x + x * unitsPerPixel,
+				Mathf.Lerp(minHeight, maxHeight, pixels[i].r),
+				initialOffset.y + z * unitsPerPixel);
+		}
+
+		int currentVertice = 0;
+		for (int x = 0; x < width - 1; x++) {
+			for (int y = 0; y < height - 1; y++) {
+				int current = GetVerticeIndex (x, y, width);
+				int right = GetVerticeIndex (x + 1, y, width);
+				int bottom = GetVerticeIndex (x, y + 1, width);
+				int diagonal = GetVerticeIndex (x + 1, y + 1, width);
+
+				//Populates the real vertices list with the pre calculated vertices
+				realVertices.Add (referenceVertices [current]); 
+				realVertices.Add (referenceVertices [right]);
+				realVertices.Add (referenceVertices [bottom]);
+				realVertices.Add (referenceVertices [diagonal]);
+
+				//Replaces the original ids with the new vertices ids
+				current = currentVertice++; 
+				right = currentVertice++;
+				bottom = currentVertice++;
+				diagonal = currentVertice++;
+
+				triangles.Add (current);
+				triangles.Add (bottom);
+				triangles.Add (right);
+				triangles.Add (right);
+				triangles.Add (bottom);
+				triangles.Add (diagonal);
+
+/*				triangles [currentPos++] = current;
+				triangles [currentPos++] = bottom;
+				triangles [currentPos++] = right;
+				triangles [currentPos++] = right;
+				triangles [currentPos++] = bottom;
+				triangles [currentPos++] = diagonal;*/
+			}
+		}
+
+		GameObject generated;
+		MeshFilter filter;
+		if (Selection.activeGameObject != null) {
+			generated = Selection.activeGameObject;
+			filter = generated.GetComponent<MeshFilter> ();
+		} else {
+			generated = new GameObject ("Generated Terrain");
+			filter = generated.AddComponent<MeshFilter> ();
+			generated.AddComponent<MeshRenderer> ();
+		}
+
+		Mesh mesh = new Mesh ();
+		mesh.SetVertices(realVertices);
+		mesh.SetTriangles(triangles,0);
+		mesh.RecalculateNormals ();
+
+		filter.sharedMesh = mesh;
+	}
+
+	void OldGenerateTerrain(){
 		int width = referenceTexture.width;
 		int height = referenceTexture.height;
 
@@ -75,22 +155,18 @@ public class LowPolyTerrainWindow : EditorWindow {
 				triangles [currentPos++] = right;
 				triangles [currentPos++] = bottom;
 				triangles [currentPos++] = diagonal;
-
 			}
 		}
 
 		GameObject generated;
-		MeshFilter meshFilter;
-		MeshRenderer renderer;
-
-		if (Selection.activeGameObject != null && Selection.activeGameObject.GetComponent<MeshFilter> () != null) {
+		MeshFilter filter;
+		if (Selection.activeGameObject != null) {
 			generated = Selection.activeGameObject;
-			meshFilter = generated.GetComponent<MeshFilter> ();
-			renderer = generated.GetComponent<MeshRenderer> ();
-		}else{
-			generated = new GameObject ("Generated terrain");
-			meshFilter = generated.AddComponent<MeshFilter> ();
-			renderer = generated.AddComponent<MeshRenderer> ();
+			filter = generated.GetComponent<MeshFilter> ();
+		} else {
+			generated = new GameObject ("Generated Terrain");
+			filter = generated.AddComponent<MeshFilter> ();
+			generated.AddComponent<MeshRenderer> ();
 		}
 
 		Mesh mesh = new Mesh ();
@@ -98,8 +174,8 @@ public class LowPolyTerrainWindow : EditorWindow {
 		mesh.triangles = triangles;
 		mesh.RecalculateNormals ();
 
-		meshFilter.sharedMesh = mesh;
-		Selection.activeGameObject = generated;
+		filter.sharedMesh = mesh;
+
 	}
 
 	int GetVerticeIndex(int x, int y, int width){
