@@ -29,16 +29,7 @@ public class World : MonoBehaviour {
 
 	void Start() {
         birds = new Dictionary<BirdType, List<BirdAgent>>();
-//
-//		WorldSpawnDetail w = new WorldSpawnDetail () {
-//			ammount = 55,
-//			cfg = spawns [0].cfg,
-//			flockId = 1,
-//			position = Vector3.up * 40,
-//			radius = 1
-//		};
-//		boundariesRadius = 15;
-//		SpawnBirds (w);
+
         foreach(var wsd in spawns) { 
             SpawnBirds(wsd);
         }
