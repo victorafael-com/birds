@@ -49,6 +49,7 @@ public class LowPolyTerrainEditor : Editor {
 				lowPolyTerrain.heightLimit [i] = lastMax;
 			}
 			lastMax = lowPolyTerrain.heightLimit [i];
+			GUILayout.Label ("(" + (lastMax * lowPolyTerrain.maxHeight).ToString ("f1") + "m)");
 			if (GUILayout.Button ("x")) {
 				lowPolyTerrain.colors.RemoveAt (i);
 				lowPolyTerrain.heightLimit.RemoveAt (i);
