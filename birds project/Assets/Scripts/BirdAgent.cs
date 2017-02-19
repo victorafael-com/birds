@@ -11,6 +11,7 @@ public class BirdAgent : MonoBehaviour
 	private const int ALIGNMENT_SKIPS = 4;
 	Vector3 acceleration;
 	Vector3 velocity;
+	Vector3 appliedVelocity;
 
 	[HideInInspector]
 	public BirdAgentConfig config;
@@ -108,9 +109,11 @@ public class BirdAgent : MonoBehaviour
 		velocity += acceleration * Time.deltaTime;
 		velocity = Vector3.ClampMagnitude (velocity, config.maxVelocity * velocityVariation);
 
-		position += velocity * Time.deltaTime;
+		appliedVelocity = Vector3.MoveTowards (appliedVelocity, velocity, config.maxAcceleration * 0.6f * Time.deltaTime);
+
+		transform.forward = appliedVelocity;
+		position += appliedVelocity * Time.deltaTime;
 		transform.position = position;
-		transform.forward = velocity;
 
 		if (animator != null) {
 			Vector3 directionVector = transform.InverseTransformPoint (position + acceleration).normalized;
