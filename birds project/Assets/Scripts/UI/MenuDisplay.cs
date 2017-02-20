@@ -65,12 +65,17 @@ public class MenuDisplay : MonoBehaviour {
 			yield return new WaitForEndOfFrame ();
 			current = Mathf.MoveTowards (current, val, Time.unscaledDeltaTime / fadeTime);
 			canvasGroup.alpha = current;
+			if(isVR && reticleCanvasGroup != null){
+				reticleCanvasGroup.alpha = current;
+			}
 			Time.timeScale = 1 - current;
 		} while(current != val);
 
 		canvasGroup.alpha = val;
 		Time.timeScale = 1 - val;
-
+		if(isVR && reticleCanvasGroup != null){
+			reticleCanvasGroup.alpha = val;
+		}
 		if (val == 0) {
 			visible = false;
 			gameObject.SetActive (false);
