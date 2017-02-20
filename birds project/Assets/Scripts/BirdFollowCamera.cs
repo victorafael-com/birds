@@ -28,7 +28,7 @@ public class BirdFollowCamera : MonoBehaviour {
 	
 	// Update is called once per frame
 	void LateUpdate () {
-        if (Input.GetMouseButtonUp(1)) {
+        if (Input.GetMouseButtonUp(0)) {
             target = World.instance.birds[searchType].GetRandom().transform;
         }
 

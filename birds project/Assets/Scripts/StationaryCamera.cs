@@ -5,6 +5,7 @@ using UnityEngine;
 public class StationaryCamera : MonoBehaviour {
 	public Vector3 floorOffset;
 	private Camera usedCamera;
+
 	// Use this for initialization
 	void Start () {
 		usedCamera = GetComponentInChildren<Camera> ();
@@ -17,12 +18,8 @@ public class StationaryCamera : MonoBehaviour {
 			RaycastHit hit;
 
 			if (Physics.Raycast (r, out hit)) {
-				transform.position = hit.point + floorOffset;// + usedCamera.transform.TransformPoint(usedCamera.transform.localPosition);
-				transform.Translate(
-					-(usedCamera.transform.right * usedCamera.transform.localPosition.x +
-						usedCamera.transform.up * usedCamera.transform.localPosition.y +
-						usedCamera.transform.forward * usedCamera.transform.localPosition.z)
-				);
+				transform.position = hit.point;
+				transform.position += -(usedCamera.transform.position - hit.point) + floorOffset;
 			}
 		}
 	}
