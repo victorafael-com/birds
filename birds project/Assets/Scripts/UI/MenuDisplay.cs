@@ -1,15 +1,26 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class MenuDisplay : MonoBehaviour {
 
+	[Header("Structure")]
 	public float fadeTime = 0.4f;
+	public CameraModeButton[] buttons;
+
+	[Header("VR Support")]
 	public bool isVR = false;
+	public CanvasGroup reticleCanvasGroup;
+
 	private CanvasGroup canvasGroup;
 	private bool visible;
 
-	public CameraModeButton[] buttons;
+
+	[Header("Bird Count")]
+	public Text birdCountDisplay;
+	public Text removeBirdLabel;
+	public int removeBirdCount = 5;
 
 	// Use this for initialization
 	void Awake () {
@@ -30,6 +41,21 @@ public class MenuDisplay : MonoBehaviour {
 			button.Interactable = button.mode != newMode;
 		}
 	}
+	void OnEnable(){
+		UpdateBirdCount ();
+	}
+
+	void UpdateBirdCount(){
+		int count = World.instance.birds [BirdType.prey].Count + World.instance.birds [BirdType.predator].Count;
+		birdCountDisplay.text = count.ToString ();
+
+		removeBirdLabel.text = "- " + Mathf.Min(count, removeBirdCount);
+	}
+
+	public void UpdateBirdAmmount(int count){
+		GlobalManager.instance.UpdateBirdAmmount (count);
+		UpdateBirdCount ();
+	}
 
 	IEnumerator FadeTo(float val){
 		float current = canvasGroup.alpha;
@@ -49,5 +75,13 @@ public class MenuDisplay : MonoBehaviour {
 			visible = false;
 			gameObject.SetActive (false);
 		}
+	}
+
+	void Update(){
+		var system = UnityEngine.EventSystems.EventSystem.current;
+		var builder = new System.Text.StringBuilder ();
+		builder.AppendLine("Already Selecting: " + system.alreadySelecting);
+		builder.AppendLine ("Current Input Module: " + system.currentInputModule.GetType ().ToString ());
+		builder.AppendLine ("Current Sel. GameObj: " + (system.currentSelectedGameObject == null ? "Null" : system.currentSelectedGameObject.name));
 	}
 }

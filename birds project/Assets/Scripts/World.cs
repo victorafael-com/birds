@@ -38,6 +38,16 @@ public class World : MonoBehaviour {
             b.SetWatchedBirds(birds[BirdType.predator]);
         }
     }
+
+	public void SpawnBirds(int count){
+		WorldSpawnDetail spawnDetails = spawns [0];
+		spawnDetails.ammount = count;
+		spawnDetails.radius = count * 0.5f;
+		spawnDetails.position = Random.insideUnitSphere * boundariesRadius * 0.4f;
+		spawnDetails.position.y = 15 + Mathf.Repeat (spawnDetails.position.y, 25);
+		SpawnBirds (spawnDetails);
+	}
+
     public void SpawnBirds(WorldSpawnDetail spawnDetail) {
         if (!birds.ContainsKey(spawnDetail.cfg.type)) {
             birds.Add(spawnDetail.cfg.type, new List<BirdAgent>());
@@ -149,10 +159,10 @@ public class World : MonoBehaviour {
     public void KillBird(BirdAgent b, bool destroyBody) {
         b.alive = false;
         birds[b.config.type].Remove(b);
-        if (destroyBody) {
+		if (destroyBody) {
 			b.DestroyBody ();
-            Destroy(Instantiate(bloodPrefab, b.transform.position, Quaternion.identity), 10);
-        }
+			Destroy (Instantiate (bloodPrefab, b.transform.position, Quaternion.identity), 10);
+		}
         Destroy(b.gameObject, 4);
 
         string debug = "Killed bird. current count: ";

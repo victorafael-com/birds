@@ -7,19 +7,19 @@ using UnityEngine.UI;
 public class CameraModeButton : MonoBehaviour {
 	public bool Interactable{
 		get{
+			if (button == null)
+				button = GetComponent<Button> ();
 			return button.interactable;
 		}
 		set{
+			if (button == null)
+				button = GetComponent<Button> ();
 			button.interactable = value;
 		}
 	}
 
 	public GlobalManager.CameraModes mode;
 	private Button button;
-
-	void Awake(){
-		button = GetComponent<Button> ();
-	}
 
 	public void Click(){
 		GlobalManager.instance.UpdateMode (mode);

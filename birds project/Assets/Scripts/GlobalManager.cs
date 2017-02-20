@@ -42,6 +42,19 @@ public class GlobalManager : MonoBehaviour {
 	public void ToggleState(){
 		menu.Toggle ();
 	}
+	public void UpdateBirdAmmount(int count){
+		if (count < 0) {
+			count *= -1;
+			if (World.instance.birds [BirdType.prey].Count - count < 0) {
+				count = World.instance.birds [BirdType.prey].Count;
+			}
+			for (int i = 0; i < count; i++) {
+				World.instance.KillBird (World.instance.birds [BirdType.prey].GetRandom (), false);
+			}
+		} else {
+			World.instance.SpawnBirds (count);
+		}
+	}
 	// Update is called once per frame
 	void Update () {
 		if (Input.GetKeyUp (KeyCode.Escape)) {
