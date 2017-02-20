@@ -1,13 +1,22 @@
 ﻿<Properties StartupItem="Assembly-CSharp.csproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\BirdAgent.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\Input\VRInputModule.cs">
     <Files>
-      <File FileName="Assets\Scripts\BirdAgent.cs" Line="307" Column="17" />
+      <File FileName="Assets\Scripts\Input\VRInputModule.cs" Line="58" Column="36" />
+      <File FileName="Assets\Scripts\BirdAgent.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\World.cs" Line="1" Column="1" />
-      <File FileName="Assets\Scripts\BirdWatchCamera.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\BirdFollowCamera.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\CameraRectSetup.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\BirdAgentConfig.cs" Line="1" Column="1" />
+      <File FileName="Assets\Low Poly Terrain Generator\Editor\LowPolyTerrainEditor.cs" Line="1" Column="1" />
+      <File FileName="Assets\Low Poly Terrain Generator\LowPolyTerrain.cs" Line="1" Column="1" />
+      <File FileName="Assets\Low Poly Terrain Generator\TerrainItemSpawner.cs" Line="1" Column="1" />
+      <File FileName="Assets\Low Poly Terrain Generator\Editor\TerrainItemSpawnerEditor.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\UI\MenuDisplay.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\GlobalManager.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\FreeFlightCamera.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\StationaryCamera.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\UI\CameraModeButton.cs" Line="1" Column="1" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
